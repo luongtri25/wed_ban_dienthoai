@@ -1,0 +1,29 @@
+const productService = require("../services/productService");
+
+exports.getAll = async (req, res) => {
+  const data = await productService.getAll();
+  res.json(data);
+};
+
+exports.getById = async (req, res) => {
+  const data = await productService.getById(req.params.id);
+  if (!data) return res.status(404).json({ message: "Not found" });
+  res.json(data);
+};
+
+exports.create = async (req, res) => {
+  const data = await productService.create(req.body);
+  res.status(201).json(data);
+};
+
+exports.update = async (req, res) => {
+  const data = await productService.update(req.params.id, req.body);
+  if (!data) return res.status(404).json({ message: "Not found" });
+  res.json(data);
+};
+
+exports.remove = async (req, res) => {
+  const data = await productService.remove(req.params.id);
+  if (!data) return res.status(404).json({ message: "Not found" });
+  res.json({ message: "Deleted" });
+};
