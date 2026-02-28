@@ -4,6 +4,7 @@ const objectId = Joi.string().hex().length(24);
 
 const createProduct = Joi.object({
   name: Joi.string().trim().min(1).required(),
+  slug: Joi.string().trim().min(1).optional(),
   sku: Joi.string().trim().optional(),
   price: Joi.number().min(0).required(),
   salePrice: Joi.number().min(0).optional(),
@@ -18,6 +19,7 @@ const createProduct = Joi.object({
 
 const updateProduct = Joi.object({
   name: Joi.string().trim().min(1),
+  slug: Joi.string().trim().min(1),
   sku: Joi.string().trim(),
   price: Joi.number().min(0),
   salePrice: Joi.number().min(0),
@@ -34,4 +36,8 @@ const idParam = Joi.object({
   id: objectId.required(),
 });
 
-module.exports = { createProduct, updateProduct, idParam };
+const slugParam = Joi.object({
+  slug: Joi.string().trim().min(1).required(),
+});
+
+module.exports = { createProduct, updateProduct, idParam, slugParam };

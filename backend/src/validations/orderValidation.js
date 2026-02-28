@@ -23,7 +23,6 @@ const shippingAddress = Joi.object({
 });
 
 const createOrder = Joi.object({
-  user: objectId.required(),
   items: Joi.array().items(orderItem).min(1).required(),
   shippingAddress: shippingAddress.required(),
   paymentMethod: Joi.string().optional(),

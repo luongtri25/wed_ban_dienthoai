@@ -8,7 +8,6 @@ const { createUser, updateUser, idParam } = require("../validations/userValidati
 
 router.get("/", auth, admin, userController.getAll);
 router.get("/:id", auth, admin, validate({ params: idParam }), userController.getById);
-router.post("/", auth, admin, validate({ body: createUser }), userController.create);
 router.put(
   "/:id",
   auth,

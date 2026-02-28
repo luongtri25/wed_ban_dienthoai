@@ -12,7 +12,10 @@ exports.getById = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const data = await orderService.create(req.body);
+  const data = await orderService.create({
+    ...req.body,
+    user: req.user.id,
+  });
   res.status(201).json(data);
 };
 

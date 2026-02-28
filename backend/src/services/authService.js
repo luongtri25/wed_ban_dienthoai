@@ -17,7 +17,7 @@ exports.register = async ({ name, email, password, phone }) => {
 
   return { user: { id: user._id, name, email, role: user.role }, token };
 };
-de
+
 exports.login = async ({ email, password }) => {
   const user = await User.findOne({ email }).select("+passwordHash");
   if (!user) throw new Error("INVALID_CREDENTIALS");

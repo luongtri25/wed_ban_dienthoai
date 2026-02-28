@@ -1,0 +1,59 @@
+﻿import Link from "next/link";
+import { siteConfig } from "@/lib/site";
+
+export default function SiteHeader() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-black/5 bg-[var(--bg)]/80 backdrop-blur">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
+        <Link href="/" className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--ink)] text-sm font-semibold text-white shadow-lg shadow-black/15">
+            NM
+          </span>
+          <div className="leading-tight">
+            <p className="font-display text-lg text-[var(--ink)]">
+              {siteConfig.name}
+            </p>
+            <p className="text-xs text-[var(--muted)]">
+              Cửa hàng điện thoại SSR
+            </p>
+          </div>
+        </Link>
+
+        <nav className="hidden items-center gap-6 text-sm font-medium text-[var(--muted)] md:flex">
+          <Link className="hover:text-[var(--ink)]" href="/products">
+            Sản phẩm
+          </Link>
+          <Link className="hover:text-[var(--ink)]" href="/products">
+            Ưu đãi
+          </Link>
+          <Link className="hover:text-[var(--ink)]" href="/products">
+            Phụ kiện
+          </Link>
+          <Link className="hover:text-[var(--ink)]" href="/products">
+            So sánh
+          </Link>
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-2 rounded-full border border-black/10 bg-white/80 px-4 py-2 text-xs text-[var(--muted)] shadow-sm shadow-black/5 lg:flex">
+            <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
+            Giao nhanh 2h tại HN/HCM
+          </div>
+          <Link
+            href="/login"
+            className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-black/30"
+          >
+            Đăng nhập
+          </Link>
+          <Link
+            href="/cart"
+            className="rounded-full bg-[var(--ink)] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-black/15 transition hover:-translate-y-0.5"
+          >
+            Giỏ hàng
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+

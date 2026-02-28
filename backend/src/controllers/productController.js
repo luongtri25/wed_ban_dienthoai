@@ -11,6 +11,12 @@ exports.getById = async (req, res) => {
   res.json(data);
 };
 
+exports.getBySlug = async (req, res) => {
+  const data = await productService.getBySlug(req.params.slug);
+  if (!data) return res.status(404).json({ message: "Not found" });
+  res.json(data);
+};
+
 exports.create = async (req, res) => {
   const data = await productService.create(req.body);
   res.status(201).json(data);

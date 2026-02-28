@@ -8,9 +8,11 @@ const {
   createProduct,
   updateProduct,
   idParam,
+  slugParam,
 } = require("../validations/productValidation");
 
 router.get("/", productController.getAll);
+router.get("/slug/:slug", validate({ params: slugParam }), productController.getBySlug);
 router.get("/:id", validate({ params: idParam }), productController.getById);
 router.post(
   "/",
