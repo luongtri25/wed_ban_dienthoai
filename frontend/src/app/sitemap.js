@@ -4,7 +4,7 @@ import { getProducts } from "@/lib/api";
 export default async function sitemap() {
   const products = await getProducts();
   const base = siteConfig.url;
-  const routes = ["", "/products", "/login", "/register", "/cart"].map(
+  const routes = ["", "/products"].map(
     (route) => ({
       url: `${base}${route}`,
       lastModified: new Date(),

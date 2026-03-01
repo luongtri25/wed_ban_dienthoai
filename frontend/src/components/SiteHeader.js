@@ -1,7 +1,48 @@
-﻿import Link from "next/link";
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { siteConfig } from "@/lib/site";
 
+const readUser = () => {
+  const raw = localStorage.getItem("user");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
 export default function SiteHeader() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    setUser(readUser());
+
+    const handleAuthChanged = () => setUser(readUser());
+    const handleStorage = (event) => {
+      if (event.key === "user") {
+        setUser(readUser());
+      }
+    };
+
+    window.addEventListener("authChanged", handleAuthChanged);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("authChanged", handleAuthChanged);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    window.dispatchEvent(new Event("authChanged"));
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-[var(--bg)]/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
@@ -39,12 +80,28 @@ export default function SiteHeader() {
             <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
             Giao nhanh 2h tại HN/HCM
           </div>
-          <Link
-            href="/login"
-            className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-black/30"
-          >
-            Đăng nhập
-          </Link>
+
+          {user ? (
+            <>
+              <span className="rounded-full border border-black/10 px-4 py-2 text-sm text-[var(--ink)]">
+                Xin chào, {user.name}
+              </span>
+              <button
+                onClick={logout}
+                className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-[var(--ink)]"
+              >
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:border-black/30"
+            >
+              Đăng nhập
+            </Link>
+          )}
+
           <Link
             href="/cart"
             className="rounded-full bg-[var(--ink)] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-black/15 transition hover:-translate-y-0.5"
@@ -56,4 +113,3 @@ export default function SiteHeader() {
     </header>
   );
 }
-
