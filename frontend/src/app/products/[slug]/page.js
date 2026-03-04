@@ -1,9 +1,10 @@
 ﻿import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getProduct } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import { siteConfig } from "@/lib/site";
+import AddToCartButton from "@/components/AddToCartButton";
+import ProductImageGallery from "@/components/ProductImageGallery";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,18 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) return {};
+
+  const metadataImages = (() => {
+    const list = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
+    if (!list.length && product.image) list.push(product.image);
+    if (!list.length) list.push("/phone-shell.svg");
+    return list.slice(0, 3).map((image) => ({
+      url: image.startsWith("http") ? image : `${siteConfig.url}${image}`,
+      width: 1200,
+      height: 630,
+      alt: product.name,
+    }));
+  })();
 
   return {
     title: product.name,
@@ -22,14 +35,7 @@ export async function generateMetadata({ params }) {
       title: product.name,
       description: product.short,
       url: `${siteConfig.url}/products/${product.slug || product.id}`,
-      images: [
-        {
-          url: product.image,
-          width: 1200,
-          height: 630,
-          alt: product.name,
-        },
-      ],
+      images: metadataImages,
     },
   };
 }
@@ -46,11 +52,20 @@ export default async function ProductDetail({ params }) {
   const displayPrice = product.salePrice ?? product.price ?? 0;
   const originalPrice = product.salePrice ? product.price : null;
 
+  const galleryImages = (() => {
+    const list = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
+    if (!list.length && product.image) list.push(product.image);
+    if (!list.length) list.push("/phone-shell.svg");
+    return list.slice(0, 3);
+  })();
+
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
     name: product.name,
-    image: [`${siteConfig.url}${product.image}`],
+    image: galleryImages.map((image) =>
+      image.startsWith("http") ? image : `${siteConfig.url}${image}`
+    ),
     description: product.description || product.short,
     brand: {
       "@type": "Brand",
@@ -95,15 +110,7 @@ export default async function ProductDetail({ params }) {
               {product.stock ?? 0} máy có sẵn
             </span>
           </div>
-          <div className="mt-8 rounded-3xl bg-[var(--surface)] p-8">
-            <Image
-              src={product.image}
-              alt={product.name}
-              width={260}
-              height={420}
-              className="mx-auto h-64 w-auto drop-shadow-[0_30px_40px_rgba(15,17,26,0.3)]"
-            />
-          </div>
+          <ProductImageGallery images={galleryImages} productName={product.name} />
           <div className="mt-6 grid grid-cols-3 gap-3 text-xs text-[var(--muted)]">
             {specsEntries.slice(0, 3).map(([key, value]) => (
               <div
@@ -159,9 +166,10 @@ export default async function ProductDetail({ params }) {
                   </p>
                 ) : null}
               </div>
-              <button className="rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-black/15">
-                Thêm vào giỏ
-              </button>
+              <AddToCartButton
+                productId={product.id}
+                disabled={(product.stock ?? 0) < 1}
+              />
             </div>
           </div>
 

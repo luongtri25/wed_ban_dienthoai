@@ -1,0 +1,50 @@
+[
+  {
+    "_id": { "$oid": "65f200000000000000000001" },
+    "name": "Phụ kiện",
+    "parent": null,
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f200000000000000000002" },
+    "name": "Ốp lưng",
+    "parent": { "$oid": "65f200000000000000000001" },
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f200000000000000000003" },
+    "name": "Cáp & củ sạc",
+    "parent": { "$oid": "65f200000000000000000001" },
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f200000000000000000004" },
+    "name": "Tai nghe",
+    "parent": { "$oid": "65f200000000000000000001" },
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f200000000000000000005" },
+    "name": "Pin dự phòng",
+    "parent": { "$oid": "65f200000000000000000001" },
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f200000000000000000006" },
+    "name": "Kính cường lực",
+    "parent": { "$oid": "65f200000000000000000001" },
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f200000000000000000007" },
+    "name": "Giá đỡ & tripod",
+    "parent": { "$oid": "65f200000000000000000001" },
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f200000000000000000008" },
+    "name": "Loa bluetooth",
+    "parent": { "$oid": "65f200000000000000000001" },
+    "isActive": true
+  }
+]

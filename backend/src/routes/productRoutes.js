@@ -4,6 +4,8 @@ const productController = require("../controllers/productController");
 const auth = require("../middlewares/auth");
 const admin = require("../middlewares/admin");
 const validate = require("../middlewares/validate");
+const uploadProductImage = require("../middlewares/uploadProductImage");
+
 const {
   createProduct,
   updateProduct,
@@ -34,6 +36,14 @@ router.delete(
   admin,
   validate({ params: idParam }),
   productController.remove
+);
+
+router.post(
+  "/upload-image",
+  auth,
+  admin,
+  uploadProductImage,
+  productController.uploadImage
 );
 
 module.exports = router;

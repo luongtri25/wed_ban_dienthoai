@@ -15,21 +15,18 @@ const readUser = () => {
 };
 
 export default function SiteHeader() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() =>
+    typeof window !== "undefined" ? readUser() : null
+  );
 
   useEffect(() => {
-    setUser(readUser());
-
     const handleAuthChanged = () => setUser(readUser());
     const handleStorage = (event) => {
-      if (event.key === "user") {
-        setUser(readUser());
-      }
+      if (event.key === "user") setUser(readUser());
     };
 
     window.addEventListener("authChanged", handleAuthChanged);
     window.addEventListener("storage", handleStorage);
-
     return () => {
       window.removeEventListener("authChanged", handleAuthChanged);
       window.removeEventListener("storage", handleStorage);
@@ -48,15 +45,11 @@ export default function SiteHeader() {
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--ink)] text-sm font-semibold text-white shadow-lg shadow-black/15">
-            NM
+            T
           </span>
           <div className="leading-tight">
-            <p className="font-display text-lg text-[var(--ink)]">
-              {siteConfig.name}
-            </p>
-            <p className="text-xs text-[var(--muted)]">
-              Cửa hàng điện thoại SSR
-            </p>
+            <p className="font-display text-lg text-[var(--ink)]">{siteConfig.name}</p>
+            <p className="text-xs text-[var(--muted)]">Cửa hàng số 1 Việt Nam</p>
           </div>
         </Link>
 
@@ -73,14 +66,14 @@ export default function SiteHeader() {
           <Link className="hover:text-[var(--ink)]" href="/products">
             So sánh
           </Link>
+          {user?.role === "admin" ? (
+            <Link className="hover:text-[var(--ink)]" href="/admin/products">
+              Admin
+            </Link>
+          ) : null}
         </nav>
 
         <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-2 rounded-full border border-black/10 bg-white/80 px-4 py-2 text-xs text-[var(--muted)] shadow-sm shadow-black/5 lg:flex">
-            <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
-            Giao nhanh 2h tại HN/HCM
-          </div>
-
           {user ? (
             <>
               <span className="rounded-full border border-black/10 px-4 py-2 text-sm text-[var(--ink)]">

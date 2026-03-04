@@ -26,10 +26,26 @@ const normalizeProduct = (product) => {
   };
 };
 
-const normalizeCategory = (category) => ({
-  ...category,
-  description: category.description || "Chọn máy theo nhu cầu.",
-});
+const normalizeBrand = (brand) => {
+  const rawId = brand?._id ?? brand?.id ?? "";
+  const id = typeof rawId === "string" ? rawId : rawId?.toString?.() || "";
+  return { ...brand, id };
+};
+
+const normalizeCategory = (category) => {
+  const rawId = category?._id ?? category?.id ?? "";
+  const id = typeof rawId === "string" ? rawId : rawId?.toString?.() || "";
+  return {
+    ...category,
+    id,
+    description: category.description || "Chọn máy theo nhu cầu.",
+  };
+};
+
+export const getBrands = async () => {
+  const data = await apiGet("/api/brands");
+  return Array.isArray(data) ? data.map(normalizeBrand) : [];
+};
 
 export async function apiGet(path, { revalidate } = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -63,4 +79,138 @@ export const getProduct = async (slugOrId) => {
 export const getCategories = async () => {
   const data = await apiGet("/api/categories");
   return Array.isArray(data) ? data.map(normalizeCategory) : [];
+};
+
+export const uploadProductImage = async (file) => {
+  const token = getToken();
+  if (!token) {
+    const err = new Error("Vui lòng đăng nhập");
+    err.status = 401;
+    throw err;
+  }
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch(`${API_BASE}/api/products/upload-image`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.message || `API error ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data; // { url: "/productImg/xxx.jpg" }
+};
+
+const getToken = () =>
+  typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+const apiAuth = async (path, { method = "GET", body } = {}) => {
+  const token = getToken();
+  if (!token) {
+    const err = new Error("Vui lòng đăng nhập");
+    err.status = 401;
+    throw err;
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.message || `API error ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+};
+
+export const getCart = () => apiAuth("/api/cart");
+export const addCartItem = (productId, qty = 1) =>
+  apiAuth("/api/cart/items", { method: "POST", body: { productId, qty } });
+export const updateCartItemQty = (productId, qty) =>
+  apiAuth(`/api/cart/items/${productId}`, { method: "PUT", body: { qty } });
+export const removeCartItem = (productId) =>
+  apiAuth(`/api/cart/items/${productId}`, { method: "DELETE" });
+export const clearCart = () => apiAuth("/api/cart", { method: "DELETE" });
+
+export const createOrder = (payload) =>
+  apiAuth("/api/orders", { method: "POST", body: payload });
+
+export const createMomoPayment = (payload) =>
+  apiAuth("/api/payments/momo/create", { method: "POST", body: payload });
+
+export const createProduct = (payload) =>
+  apiAuth("/api/products", { method: "POST", body: payload });
+export const updateProduct = (id, payload) =>
+  apiAuth(`/api/products/${id}`, { method: "PUT", body: payload });
+export const deleteProduct = (id) =>
+  apiAuth(`/api/products/${id}`, { method: "DELETE" });
+
+export const createBrand = (payload) =>
+  apiAuth("/api/brands", { method: "POST", body: payload });
+export const updateBrand = (id, payload) =>
+  apiAuth(`/api/brands/${id}`, { method: "PUT", body: payload });
+export const deleteBrand = (id) =>
+  apiAuth(`/api/brands/${id}`, { method: "DELETE" });
+
+export const createCategory = (payload) =>
+  apiAuth("/api/categories", { method: "POST", body: payload });
+export const updateCategory = (id, payload) =>
+  apiAuth(`/api/categories/${id}`, { method: "PUT", body: payload });
+export const deleteCategory = (id) =>
+  apiAuth(`/api/categories/${id}`, { method: "DELETE" });
+
+export const updateOrderStatus = (orderId, status) =>
+  apiAuth(`/api/orders/${orderId}/status`, {
+    method: "PATCH",
+    body: { status },
+  });
+
+const normalizeOrder = (order) => {
+  if (!order) return null;
+  const rawId = order._id ?? order.id ?? "";
+  const id = typeof rawId === "string" ? rawId : rawId?.toString?.() || "";
+
+  return {
+    ...order,
+    id,
+    items: Array.isArray(order.items)
+      ? order.items.map((item) => {
+          const rawProductId = item.product?._id ?? item.product ?? "";
+          const productId =
+            typeof rawProductId === "string"
+              ? rawProductId
+              : rawProductId?.toString?.() || "";
+
+          return {
+            ...item,
+            productId,
+          };
+        })
+      : [],
+  };
+};
+
+export const getOrders = async () => {
+  const data = await apiAuth("/api/orders");
+  return Array.isArray(data) ? data.map(normalizeOrder) : [];
+};
+
+export const getOrderById = async (id) => {
+  if (!id) return null;
+  const data = await apiAuth(`/api/orders/${id}`);
+  return normalizeOrder(data);
 };

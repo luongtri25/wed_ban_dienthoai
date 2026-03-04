@@ -33,3 +33,8 @@ exports.remove = async (req, res) => {
   if (!data) return res.status(404).json({ message: "Not found" });
   res.json({ message: "Deleted" });
 };
+
+exports.uploadImage = async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "Image is required" });
+  return res.status(201).json({ url: `/productImg/${req.file.filename}` });
+};

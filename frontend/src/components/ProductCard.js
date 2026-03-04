@@ -18,7 +18,7 @@ export default function ProductCard({ product }) {
         <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent)]">
           {badge}
         </span>
-        <span>{stock} máy có sẵn</span>
+        <span>{stock} Máy có sẵn</span>
       </div>
 
       <div className="mt-6 flex-1 rounded-2xl bg-[var(--surface)] p-6">
@@ -46,7 +46,7 @@ export default function ProductCard({ product }) {
             </p>
           </div>
           <span className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">
-            Xem máy
+            Xem chi tiết
           </span>
         </div>
       </div>

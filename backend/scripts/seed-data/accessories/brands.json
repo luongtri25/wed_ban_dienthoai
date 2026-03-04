@@ -1,0 +1,50 @@
+[
+  {
+    "_id": { "$oid": "65f100000000000000000001" },
+    "name": "Anker",
+    "country": "USA",
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f100000000000000000002" },
+    "name": "Baseus",
+    "country": "China",
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f100000000000000000003" },
+    "name": "UGREEN",
+    "country": "China",
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f100000000000000000004" },
+    "name": "Spigen",
+    "country": "Korea",
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f100000000000000000005" },
+    "name": "ESR",
+    "country": "Korea",
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f100000000000000000006" },
+    "name": "Belkin",
+    "country": "USA",
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f100000000000000000007" },
+    "name": "Xiaomi",
+    "country": "China",
+    "isActive": true
+  },
+  {
+    "_id": { "$oid": "65f100000000000000000008" },
+    "name": "Samsung",
+    "country": "Korea",
+    "isActive": true
+  }
+]

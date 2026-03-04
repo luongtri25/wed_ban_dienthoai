@@ -23,31 +23,27 @@ const shippingAddress = Joi.object({
 });
 
 const createOrder = Joi.object({
-  items: Joi.array().items(orderItem).min(1).required(),
+  items: Joi.array()
+    .items(
+      Joi.object({
+        product: objectId.required(),
+        qty: Joi.number().integer().min(1).required(),
+      })
+    )
+    .min(1)
+    .required(),
   shippingAddress: shippingAddress.required(),
-  paymentMethod: Joi.string().optional(),
-  paymentStatus: Joi.string().valid("pending", "paid", "failed").optional(),
-  status: Joi.string()
-    .valid("pending", "processing", "shipped", "delivered", "cancelled")
-    .optional(),
-  itemsPrice: Joi.number().min(0).required(),
-  shippingPrice: Joi.number().min(0).optional(),
-  totalPrice: Joi.number().min(0).required(),
+  paymentMethod: Joi.string().valid("cod", "momo").default("cod"),
 });
 
-const updateOrder = Joi.object({
-  items: Joi.array().items(orderItem).min(1),
-  shippingAddress,
-  paymentMethod: Joi.string(),
-  paymentStatus: Joi.string().valid("pending", "paid", "failed"),
-  status: Joi.string().valid("pending", "processing", "shipped", "delivered", "cancelled"),
-  itemsPrice: Joi.number().min(0),
-  shippingPrice: Joi.number().min(0),
-  totalPrice: Joi.number().min(0),
-}).min(1);
+const updateStatus = Joi.object({
+  status: Joi.string()
+    .valid("processing", "shipped", "delivered", "cancelled")
+    .required(),
+});
 
 const idParam = Joi.object({
   id: objectId.required(),
 });
 
-module.exports = { createOrder, updateOrder, idParam };
+module.exports = { createOrder, updateStatus, idParam };

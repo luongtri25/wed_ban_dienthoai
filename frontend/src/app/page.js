@@ -165,7 +165,7 @@ export default async function Home() {
             href="/products"
             className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-[var(--ink)]"
           >
-            24 sản phẩm
+            Xem tất cả sản phẩm
           </Link>
         </div>
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
