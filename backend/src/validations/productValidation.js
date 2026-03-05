@@ -36,8 +36,14 @@ const idParam = Joi.object({
   id: objectId.required(),
 });
 
+const listQuery = Joi.object({
+  brand: objectId.optional(),
+  category: objectId.optional(),
+  accessory: Joi.boolean().truthy("1", "true").falsy("0", "false").default(false),
+});
+
 const slugParam = Joi.object({
   slug: Joi.string().trim().min(1).required(),
 });
 
-module.exports = { createProduct, updateProduct, idParam, slugParam };
+module.exports = { createProduct, updateProduct, idParam, slugParam, listQuery };

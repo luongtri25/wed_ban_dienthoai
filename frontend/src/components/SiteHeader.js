@@ -1,11 +1,10 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { siteConfig } from "@/lib/site";
 
-const readUser = () => {
-  const raw = localStorage.getItem("user");
+const parseUser = (raw) => {
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -14,29 +13,37 @@ const readUser = () => {
   }
 };
 
+const readUserRaw = () => localStorage.getItem("user");
+
+const subscribeAuth = (callback) => {
+  const onAuthChanged = () => callback();
+  const onStorage = (event) => {
+    if (!event || event.key === "user") callback();
+  };
+
+  window.addEventListener("authChanged", onAuthChanged);
+  window.addEventListener("storage", onStorage);
+
+  return () => {
+    window.removeEventListener("authChanged", onAuthChanged);
+    window.removeEventListener("storage", onStorage);
+  };
+};
+
+const getAuthSnapshot = () => readUserRaw();
+const getAuthServerSnapshot = () => null;
+
 export default function SiteHeader() {
-  const [user, setUser] = useState(() =>
-    typeof window !== "undefined" ? readUser() : null
+  const userRaw = useSyncExternalStore(
+    subscribeAuth,
+    getAuthSnapshot,
+    getAuthServerSnapshot
   );
-
-  useEffect(() => {
-    const handleAuthChanged = () => setUser(readUser());
-    const handleStorage = (event) => {
-      if (event.key === "user") setUser(readUser());
-    };
-
-    window.addEventListener("authChanged", handleAuthChanged);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.removeEventListener("authChanged", handleAuthChanged);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
+  const user = useMemo(() => parseUser(userRaw), [userRaw]);
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setUser(null);
     window.dispatchEvent(new Event("authChanged"));
   };
 
@@ -66,6 +73,11 @@ export default function SiteHeader() {
           <Link className="hover:text-[var(--ink)]" href="/products">
             So sánh
           </Link>
+          {user ? (
+            <Link className="hover:text-[var(--ink)]" href="/orders">
+              Đơn hàng
+            </Link>
+          ) : null}
           {user?.role === "admin" ? (
             <Link className="hover:text-[var(--ink)]" href="/admin/products">
               Admin
@@ -76,6 +88,12 @@ export default function SiteHeader() {
         <div className="flex items-center gap-3">
           {user ? (
             <>
+              <Link
+                href="/orders"
+                className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-[var(--ink)]"
+              >
+                Đơn hàng
+              </Link>
               <span className="rounded-full border border-black/10 px-4 py-2 text-sm text-[var(--ink)]">
                 Xin chào, {user.name}
               </span>

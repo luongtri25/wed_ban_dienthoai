@@ -5,15 +5,15 @@ const auth = require("../middlewares/auth");
 const admin = require("../middlewares/admin");
 const validate = require("../middlewares/validate");
 const uploadProductImage = require("../middlewares/uploadProductImage");
-
 const {
   createProduct,
   updateProduct,
   idParam,
   slugParam,
+  listQuery,
 } = require("../validations/productValidation");
 
-router.get("/", productController.getAll);
+router.get("/", validate({ query: listQuery }), productController.getAll);
 router.get("/slug/:slug", validate({ params: slugParam }), productController.getBySlug);
 router.get("/:id", validate({ params: idParam }), productController.getById);
 router.post(

@@ -1,4 +1,5 @@
 ﻿const Product = require("../models/productModel");
+const Category = require("../models/categoryModel");
 
 const slugify = (value = "") => {
   return value
@@ -9,6 +10,37 @@ const slugify = (value = "") => {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+};
+
+const normalizeText = (value = "") =>
+  value
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const toIdString = (value) =>
+  typeof value === "string" ? value : value?.toString?.() || "";
+
+const getAccessoryCategoryIds = async () => {
+  const categories = await Category.find({ isActive: true })
+    .select("_id name parent")
+    .lean();
+
+  const root = categories.find(
+    (category) => normalizeText(category.name) === "phu kien"
+  );
+  if (!root) return [];
+
+  const rootId = toIdString(root._id);
+  return categories
+    .filter((category) => {
+      const categoryId = toIdString(category._id);
+      const parentId = toIdString(category.parent);
+      return categoryId === rootId || parentId === rootId;
+    })
+    .map((category) => category._id);
 };
 
 const buildUniqueSlug = async (baseSlug, excludeId) => {
@@ -30,8 +62,18 @@ const buildUniqueSlug = async (baseSlug, excludeId) => {
   }
 };
 
-exports.getAll = async () => {
-  return await Product.find().lean();
+exports.getAll = async ({ brand, category, accessory } = {}) => {
+  const query = { isActive: true };
+  if (brand) query.brand = brand;
+  if (category) query.category = category;
+
+  if (!category && accessory) {
+    const accessoryIds = await getAccessoryCategoryIds();
+    if (!accessoryIds.length) return [];
+    query.category = { $in: accessoryIds };
+  }
+
+  return Product.find(query).sort({ createdAt: -1 }).lean();
 };
 
 exports.getById = async (id) => {

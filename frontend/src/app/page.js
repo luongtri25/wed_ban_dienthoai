@@ -14,13 +14,98 @@ export const metadata = {
   },
 };
 
-export default async function Home() {
+const toStr = (value) =>
+  typeof value === "string" ? value : value?.toString?.() || "";
+
+const isTruthyQuery = (value) => {
+  const parsed = toStr(value).toLowerCase();
+  return parsed === "1" || parsed === "true" || parsed === "yes";
+};
+
+const normalizeText = (value = "") =>
+  value
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const buildCategoryHref = (category) => {
+  const categoryId = toStr(category?.id || category?._id);
+  const normalizedName = normalizeText(category?.name || "");
+
+  if (normalizedName === "phu kien") {
+    return "/products?accessory=1";
+  }
+
+  if (!categoryId) return "/products";
+  return `/products?category=${encodeURIComponent(categoryId)}`;
+};
+
+const buildAccessoryCategoryIds = (categories) => {
+  const normalizedById = new Map(
+    categories.map((category) => [
+      toStr(category.id || category._id),
+      {
+        id: toStr(category.id || category._id),
+        parentId: toStr(category.parent),
+        name: normalizeText(category.name || ""),
+      },
+    ])
+  );
+
+  const root = Array.from(normalizedById.values()).find(
+    (category) => category.name === "phu kien"
+  );
+  if (!root) return new Set();
+
+  const accessoryIds = new Set([root.id]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    for (const category of normalizedById.values()) {
+      if (!category.id) continue;
+      if (accessoryIds.has(category.id)) continue;
+      if (category.parentId && accessoryIds.has(category.parentId)) {
+        accessoryIds.add(category.id);
+        changed = true;
+      }
+    }
+  }
+
+  return accessoryIds;
+};
+
+const getProductCategoryId = (product) => {
+  const raw = product?.category;
+  if (!raw) return "";
+  if (typeof raw === "object") {
+    return toStr(raw.id || raw._id);
+  }
+  return toStr(raw);
+};
+
+export default async function Home({ searchParams }) {
+  const params = await searchParams;
+  const showAllCategories = isTruthyQuery(params?.showCategories);
+
   const [products, categories] = await Promise.all([
     getProducts(),
     getCategories(),
   ]);
-  const featured = products.slice(0, 4);
-  const heroProduct = products[0];
+
+  const accessoryCategoryIds = buildAccessoryCategoryIds(categories);
+  const sortedProducts = [...products].sort((a, b) => {
+    const aIsAccessory = accessoryCategoryIds.has(getProductCategoryId(a));
+    const bIsAccessory = accessoryCategoryIds.has(getProductCategoryId(b));
+    return Number(aIsAccessory) - Number(bIsAccessory);
+  });
+
+  const categoryCards = showAllCategories ? categories : categories.slice(0, 5);
+
+  const featured = sortedProducts.slice(0, 4);
+  const heroProduct = sortedProducts[0];
   const heroLink = heroProduct ? `/products/${heroProduct.slug || heroProduct.id}` : "/products";
 
   return (
@@ -117,7 +202,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-6 py-12">
+      <section id="home-categories" className="mx-auto w-full max-w-6xl px-6 py-12">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
@@ -128,17 +213,22 @@ export default async function Home() {
             </h2>
           </div>
           <Link
-            href="/products"
+            href={
+              showAllCategories
+                ? "/#home-categories"
+                : "/?showCategories=1#home-categories"
+            }
             className="text-sm font-semibold text-[var(--accent)]"
           >
-            Xem tất cả
+            {showAllCategories ? "Thu gọn" : "Xem tất cả"}
           </Link>
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-5">
-          {categories.map((category) => (
-            <div
-              key={category._id || category.name}
-              className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm"
+          {categoryCards.map((category) => (
+            <Link
+              key={category.id || category._id || category.name}
+              href={buildCategoryHref(category)}
+              className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-black/20"
             >
               <p className="font-semibold text-[var(--ink)]">
                 {category.name}
@@ -146,7 +236,7 @@ export default async function Home() {
               <p className="mt-2 text-xs text-[var(--muted)]">
                 {category.description}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -209,4 +299,3 @@ export default async function Home() {
     </div>
   );
 }
-

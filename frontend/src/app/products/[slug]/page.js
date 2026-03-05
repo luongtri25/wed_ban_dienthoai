@@ -5,8 +5,22 @@ import { formatPrice } from "@/lib/format";
 import { siteConfig } from "@/lib/site";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductImageGallery from "@/components/ProductImageGallery";
+import ProductDescription from "@/components/ProductDescription";
 
 export const dynamic = "force-dynamic";
+
+const isObjectId = (value) => /^[a-fA-F0-9]{24}$/.test(String(value || ""));
+
+const resolveReadableLabel = (value) => {
+  if (!value) return "";
+  if (typeof value === "object") {
+    return value?.name || "";
+  }
+
+  const text = String(value).trim();
+  if (!text || isObjectId(text)) return "";
+  return text;
+};
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -51,6 +65,8 @@ export default async function ProductDetail({ params }) {
   const specsEntries = Object.entries(product.specs || {});
   const displayPrice = product.salePrice ?? product.price ?? 0;
   const originalPrice = product.salePrice ? product.price : null;
+  const brandLabel = resolveReadableLabel(product.brand);
+  const categoryLabel = resolveReadableLabel(product.category);
 
   const galleryImages = (() => {
     const list = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
@@ -128,25 +144,21 @@ export default async function ProductDetail({ params }) {
           <h1 className="font-display text-3xl text-[var(--ink)]">
             {product.name}
           </h1>
-          <p className="mt-3 text-sm text-[var(--muted)]">
-            {product.short || product.description}
-          </p>
+          <ProductDescription text={product.description || product.short} />
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
             {product.rating ? (
               <span className="rounded-full bg-white px-3 py-1 shadow-sm">
                 {product.rating}★ ({product.reviewCount || 0})
               </span>
             ) : null}
-            {product.brand ? (
+            {brandLabel ? (
               <span className="rounded-full bg-white px-3 py-1 shadow-sm">
-                {typeof product.brand === "object" ? product.brand.name : product.brand}
+                {brandLabel}
               </span>
             ) : null}
-            {product.category ? (
+            {categoryLabel ? (
               <span className="rounded-full bg-white px-3 py-1 shadow-sm">
-                {typeof product.category === "object"
-                  ? product.category.name
-                  : product.category}
+                {categoryLabel}
               </span>
             ) : null}
           </div>

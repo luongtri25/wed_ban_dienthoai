@@ -1,21 +1,41 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/format";
-import { getOrderById } from "@/lib/api";
+import { cancelMyOrder, getOrderById } from "@/lib/api";
 
 const PAYMENT_LABEL = {
   cod: "Tiền mặt (COD)",
   momo: "Ví MoMo",
 };
 
+const STATUS_STEPS = ["pending", "processing", "shipped", "delivered"];
+
+const STATUS_LABEL = {
+  pending: "Chờ xác nhận",
+  processing: "Đang xử lý",
+  shipped: "Đang giao hàng",
+  delivered: "Đã giao thành công",
+  cancelled: "Đã hủy",
+};
+
+const STATUS_NOTE = {
+  pending: "Hệ thống đã ghi nhận đơn hàng của bạn.",
+  processing: "Shop đang chuẩn bị hàng để giao.",
+  shipped: "Đơn vị vận chuyển đang giao hàng.",
+  delivered: "Bạn đã nhận được hàng thành công.",
+};
+
+const canCancelStatus = (status) => status === "pending" || status === "processing";
+
 export default function OrderDetailClient({ orderId }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
   const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -25,6 +45,7 @@ export default function OrderDetailClient({ orderId }) {
         const data = await getOrderById(orderId);
         if (!active) return;
         setOrder(data);
+        setAuthRequired(false);
       } catch (err) {
         if (!active) return;
         if (err.status === 401) {
@@ -42,6 +63,39 @@ export default function OrderDetailClient({ orderId }) {
       active = false;
     };
   }, [orderId]);
+
+  const refreshOrder = async () => {
+    setActionLoading("refresh");
+    setError("");
+    try {
+      const data = await getOrderById(orderId);
+      setOrder(data);
+    } catch (err) {
+      if (err.status === 401) {
+        setAuthRequired(true);
+      } else {
+        setError(err.message || "Không thể làm mới trạng thái đơn");
+      }
+    } finally {
+      setActionLoading("");
+    }
+  };
+
+  const cancelOrder = async () => {
+    if (!order?.id || !canCancelStatus(order?.status)) return;
+    if (!window.confirm("Bạn chắc chắn muốn hủy đơn hàng này?")) return;
+
+    setActionLoading("cancel");
+    setError("");
+    try {
+      const data = await cancelMyOrder(order.id);
+      setOrder((prev) => ({ ...prev, ...data }));
+    } catch (err) {
+      setError(err.message || "Không thể hủy đơn hàng");
+    } finally {
+      setActionLoading("");
+    }
+  };
 
   if (loading) {
     return (
@@ -76,7 +130,10 @@ export default function OrderDetailClient({ orderId }) {
       <div className="mx-auto w-full max-w-6xl px-6 py-12">
         <div className="rounded-3xl border border-black/10 bg-white p-8">
           <p className="text-sm text-red-600">{error || "Không tìm thấy đơn hàng"}</p>
-          <Link href="/orders" className="mt-4 inline-flex text-sm font-semibold text-[var(--accent)]">
+          <Link
+            href="/orders"
+            className="mt-4 inline-flex text-sm font-semibold text-[var(--accent)]"
+          >
             Quay lại danh sách đơn hàng
           </Link>
         </div>
@@ -85,6 +142,8 @@ export default function OrderDetailClient({ orderId }) {
   }
 
   const address = order.shippingAddress || {};
+  const isCancelled = order.status === "cancelled";
+  const currentStepIndex = STATUS_STEPS.indexOf(order.status);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-12">
@@ -134,11 +193,97 @@ export default function OrderDetailClient({ orderId }) {
 
         <div className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">
+            Theo dõi đơn hàng
+          </h2>
+
+          <div className="mt-4 space-y-3 rounded-2xl bg-[var(--surface)]/60 p-3">
+            {STATUS_STEPS.map((step, index) => {
+              const done = !isCancelled && currentStepIndex >= index;
+              const active = !isCancelled && currentStepIndex === index;
+              const stepClass = active
+                ? "border-[var(--accent)] bg-[var(--accent-soft)]/70 shadow-sm"
+                : done
+                ? "border-emerald-200 bg-emerald-50/80"
+                : "border-black/10 bg-white";
+
+              return (
+                <div key={step} className={`rounded-2xl border px-3 py-3 ${stepClass}`}>
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
+                        done
+                          ? "border-[var(--accent)] bg-white"
+                          : "border-black/20 bg-white"
+                      }`}
+                    >
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p
+                          className={`text-sm font-semibold ${
+                            active
+                              ? "text-[var(--ink)]"
+                              : done
+                              ? "text-emerald-700"
+                              : "text-[var(--muted)]"
+                          }`}
+                        >
+                          {STATUS_LABEL[step]}
+                        </p>
+                        {active ? (
+                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">
+                            Hiện tại
+                          </span>
+                        ) : null}
+                      </div>
+                      <p
+                        className={`mt-1 text-xs ${
+                          active ? "text-[var(--ink)]/80" : "text-[var(--muted)]"
+                        }`}
+                      >
+                        {STATUS_NOTE[step]}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {isCancelled ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
+                Đơn hàng đã bị hủy.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={refreshOrder}
+              disabled={actionLoading === "refresh"}
+              className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-[var(--ink)]"
+            >
+              {actionLoading === "refresh" ? "Đang làm mới..." : "Làm mới trạng thái"}
+            </button>
+
+            {canCancelStatus(order.status) ? (
+              <button
+                type="button"
+                onClick={cancelOrder}
+                disabled={actionLoading === "cancel"}
+                className="rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600"
+              >
+                {actionLoading === "cancel" ? "Đang hủy..." : "Hủy đơn"}
+              </button>
+            ) : null}
+          </div>
+
+          <h2 className="mt-6 text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">
             Thông tin thanh toán
           </h2>
           <div className="mt-4 space-y-2 text-sm text-[var(--muted)]">
             <p>Phương thức: {PAYMENT_LABEL[order.paymentMethod] || order.paymentMethod}</p>
-            <p>Trạng thái đơn: {order.status}</p>
+            <p>Trạng thái đơn: {STATUS_LABEL[order.status] || order.status}</p>
             <p>Trạng thái thanh toán: {order.paymentStatus}</p>
             <p className="font-semibold text-[var(--ink)]">
               Tổng tiền: {formatPrice(order.totalPrice || 0)}
@@ -161,4 +306,3 @@ export default function OrderDetailClient({ orderId }) {
     </div>
   );
 }
-

@@ -42,10 +42,13 @@ const normalizeCategory = (category) => {
   };
 };
 
-export const getBrands = async () => {
-  const data = await apiGet("/api/brands");
-  return Array.isArray(data) ? data.map(normalizeBrand) : [];
-};
+const normalizeText = (value = "") =>
+  value
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 
 export async function apiGet(path, { revalidate } = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -56,8 +59,14 @@ export async function apiGet(path, { revalidate } = {}) {
   return res.json();
 }
 
-export const getProducts = async () => {
-  const data = await apiGet("/api/products");
+export const getProducts = async ({ brand, category, accessory } = {}) => {
+  const qs = new URLSearchParams();
+  if (brand) qs.set("brand", brand);
+  if (category) qs.set("category", category);
+  if (accessory) qs.set("accessory", "1");
+
+  const path = qs.toString() ? `/api/products?${qs}` : "/api/products";
+  const data = await apiGet(path);
   return Array.isArray(data) ? data.map(normalizeProduct) : [];
 };
 
@@ -76,10 +85,26 @@ export const getProduct = async (slugOrId) => {
   }
 };
 
+export const getBrands = async () => {
+  const data = await apiGet("/api/brands");
+  if (!Array.isArray(data)) return [];
+
+  const unique = new Map();
+  for (const brand of data.map(normalizeBrand)) {
+    const key = normalizeText(brand.name);
+    if (!unique.has(key)) unique.set(key, brand);
+  }
+
+  return Array.from(unique.values());
+};
+
 export const getCategories = async () => {
   const data = await apiGet("/api/categories");
   return Array.isArray(data) ? data.map(normalizeCategory) : [];
 };
+
+const getToken = () =>
+  typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
 export const uploadProductImage = async (file) => {
   const token = getToken();
@@ -104,11 +129,8 @@ export const uploadProductImage = async (file) => {
     err.status = res.status;
     throw err;
   }
-  return data; // { url: "/productImg/xxx.jpg" }
+  return data;
 };
-
-const getToken = () =>
-  typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
 const apiAuth = async (path, { method = "GET", body } = {}) => {
   const token = getToken();
@@ -177,6 +199,11 @@ export const updateOrderStatus = (orderId, status) =>
   apiAuth(`/api/orders/${orderId}/status`, {
     method: "PATCH",
     body: { status },
+  });
+
+export const cancelMyOrder = (orderId) =>
+  apiAuth(`/api/orders/${orderId}/cancel`, {
+    method: "PATCH",
   });
 
 const normalizeOrder = (order) => {
