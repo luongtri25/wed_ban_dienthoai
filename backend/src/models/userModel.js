@@ -20,7 +20,16 @@ const UserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    passwordHash: {
+      type: String,
+      required() {
+        return this.provider === "local";
+      },
+      select: false,
+    },
+    provider: { type: String, enum: ["local", "google"], default: "local" },
+    googleId: { type: String, unique: true, sparse: true, trim: true },
+    avatar: { type: String, default: "" },
     phone: { type: String, default: "" },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     addresses: { type: [AddressSchema], default: [] },

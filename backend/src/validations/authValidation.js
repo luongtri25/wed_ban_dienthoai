@@ -12,4 +12,8 @@ const login = Joi.object({
   password: Joi.string().min(6).required(),
 });
 
-module.exports = { register, login };
+const googleLogin = Joi.object({
+  idToken: Joi.string().min(20).required(),
+});
+
+module.exports = { register, login, googleLogin };

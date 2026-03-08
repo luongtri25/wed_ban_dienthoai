@@ -46,12 +46,14 @@ PORT=5000
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<db>?retryWrites=true&w=majority&appName=<appName>
 JWT_SECRET=<your_secret>
 JWT_EXPIRES_IN=7d
+GOOGLE_CLIENT_ID=<google_oauth_web_client_id>
 ```
 
 ### `frontend/.env.local`
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<same_google_oauth_web_client_id>
 ```
 
 Notes:
@@ -96,6 +98,7 @@ URLs:
 Auth endpoints:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/google`
 
 Login/Register response includes:
 - `token` (JWT)
@@ -122,6 +125,7 @@ Role rules:
 - `GET /api/categories/:id`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/google`
 
 ### Auth + Admin
 
@@ -164,13 +168,25 @@ Suggested order:
 
 - Home, products list, product detail are SSR data-driven pages.
 - Login/Register are client pages that call backend auth API.
+- Login page supports Google Sign-In and then stores backend JWT in `localStorage`.
 - Header reads auth state from `localStorage` and switches between:
   - `Dang nhap` button
   - user name + `Dang xuat`
 
-## 10) Common issues
+## 10) Google OAuth setup
+
+1. Go to Google Cloud Console -> APIs & Services -> Credentials.
+2. Create OAuth Client ID, choose **Web application**.
+3. Add Authorized JavaScript origins:
+   - `http://localhost:3000`
+4. Put Client ID into:
+   - `backend/.env` -> `GOOGLE_CLIENT_ID`
+   - `frontend/.env.local` -> `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+5. Restart backend + frontend dev servers.
+
+## 11) Common issues
 
 - `MongoServerError: bad auth`: wrong `MONGODB_URI` credentials or not URL-encoded password.
 - Frontend cannot reach API: check `NEXT_PUBLIC_API_URL`.
+- Google button not showing: check `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and origin config in Google Console.
 - 403 on create/update/delete: token user is not `admin`.
-
